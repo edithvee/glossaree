@@ -16,34 +16,18 @@ class Entry:
         else:
             self.arguments = []
 
+    def to_json(self):
+        return json.dumps(self, indent=2, cls=EntryEncoder)
+
     def __str__(self):
         return self.to_json()
 
-    def to_json(self):
-        examples = []
-        for example in self.examples:
-            examples.append({
-                "command": example.command,
-                "description": example.description,
-            })
 
-        arguments = []
-        for argument in self.arguments:
-            arguments.append({
-                "argument": argument.argument,
-                "description": argument.description,
-            })
-
-        entry = {
-            "command": self.command,
-            "description": self.description,
-            "examples": examples,
-            "arguments": arguments,
-        }
-
-        json_entry = json.dumps(entry, indent=2)
-
-        return json_entry
+class EntryEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (Entry, Argument, Example)):
+            return obj.__dict__
+        return json.JSONEncoder.default(self, obj)
 
 
 class Example:
