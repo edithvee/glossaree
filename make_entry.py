@@ -3,11 +3,28 @@ from pathlib import Path
 import click
 
 from make_entry_interactive import display_entry
-from model import Entry
+from model import Entry, Argument, Example
 
 
 def make_entry(command, description):
-    entry = Entry(command, description)
+
+    arguments = []
+    add_arg = click.confirm('add argument and description?')
+    while add_arg:
+        arg = click.prompt('give argument')
+        desc = click.prompt('give description')
+        arguments.append(Argument(arg, desc))
+        add_arg = click.confirm('add another argument and description?')
+
+    examples = []
+    add_ex = click.confirm('add example and description?')
+    while add_ex:
+        ex = click.prompt('give example')
+        desc = click.prompt('give description')
+        examples.append(Example(ex, desc))
+        add_ex = click.confirm('add another example and description?')
+
+    entry = Entry(command, description, arguments=arguments, examples=examples)
 
     return entry
 
@@ -38,7 +55,8 @@ def save_entry(entry, file_name):
 def main(command: str, description, filename):
     """Creates glossaree entry in json format.
 
-    Checks whether entry already exists and gives option to save/overwrite existing."""
+    Asks whether to add argument/s or example/s.
+    Checks whether entry already exists and asks whether to save (or overwrite existing)."""
     entry = make_entry(command, description)
     display_entry(entry)
 
