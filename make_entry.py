@@ -1,84 +1,52 @@
 from pathlib import Path
 
-from model import Example, Argument, Entry
+import click
+
+from make_entry_interactive import display_entry
+from model import Entry
 
 
-def make_entry():
-    """"""
-    command = input("command: ")
-    description = input("description: ")
-    
-    examples = []
-    examples_yesorno = input("add example? y or n: ")
-    while examples_yesorno == "y":
-        example_command = input("command: ")
-        example_description = input("description: ")
-        examples.append(Example(example_command, example_description))
-        examples_yesorno = input("add another example? y or n: ")
-        
-    arguments = []
-    arguments_yesorno = input("add argument? y or n: ")
-    while arguments_yesorno == "y":
-        argument = input("argument: ")
-        argument_description = input("description: ")
-        arguments.append(Argument(argument, argument_description))
-        arguments_yesorno = input("add another argument? y or n: ")
-
-    entry = Entry(command, description, examples=examples, arguments=arguments)
+def make_entry(command, description):
+    entry = Entry(command, description)
 
     return entry
 
 
-def display_entry(entry):
-    print("Your pretty entry looks as follows:\n")
-    print(entry)
-
-
-def save_entry(entry):
-    save_or_not = input("would you like to save this to file? (y or n) ")
-    if save_or_not != "y":
-        return
-
-    file_name = input("give a file name: ")
+def save_entry(entry, file_name):
     # hard code! hard code!
     directory = Path("/home/edith/PycharmProjects/glossaree!/dictionary")
     directory.mkdir(exist_ok=True)
     path = directory / file_name
-    # newfangled:
+    if path.exists():
+        save_prompt = 'overwrite existing entry?'
+    else:
+        save_prompt = 'save entry?'
+
+    if not click.confirm(save_prompt, default=False):
+        click.secho('\nnot saved\n', fg='yellow', bold=True)
+        return
+
     path.write_text(entry.to_json())
-    # old-school, verbose:
-    # f = open(str(path), 'w')
-    # try:
-    #     f.write(entry.to_json())
-    # except Exception:
-    #     pass
-    # finally:
-    #     f.close()
-    #
-    # standard, less verbose:
-    # with open(str(path), 'w') as f:
-    #     f.write(entry.to_json())
-    print(f"your pretty entry has been saved to:\n{path}")
+
+    print(f'\nsaved to {path}\n')
 
 
+@click.command()
+@click.argument('command')
+@click.argument('description')
+@click.option('-f', '--filename', help='file name when saving entry')
+def main(command: str, description, filename):
+    """Creates glossaree entry in json format.
 
-
-
-
-# def import_entry(tsv_line):
-#     return 1
-#
-#
-# if __name__ == "__main__":
-#     with open('exampls.tsv') as f:
-#         tsv_lines = [line.rstrip() for line in f]
-#
-#     for line in tsv_lines[0:2]:
-#         entry = import_entry(line)
-#         print(entry)
-
-
-if __name__ == "__main__":
-    entry = make_entry()
+    Checks whether entry already exists and gives option to save/overwrite existing."""
+    entry = make_entry(command, description)
     display_entry(entry)
-    save_entry(entry)
+
+    if not filename:
+        filename = command.replace(' ', '_') + '.json'
+
+    save_entry(entry, filename)
+
+
+if __name__ == '__main__':
+    main()
